@@ -100,6 +100,8 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path "$env:RUNNER_TEMP/patches" | Out-Null
           Copy-Item -Recurse -Force ".github/patches/*" "$env:RUNNER_TEMP/patches/"
+          New-Item -ItemType Directory -Force -Path "$env:RUNNER_TEMP/hospio" | Out-Null
+          Copy-Item -Recurse -Force ".github/hospio/*" "$env:RUNNER_TEMP/hospio/"
           Get-ChildItem "$env:RUNNER_TEMP/patches" | Select-Object -ExpandProperty Name
         
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
@@ -500,7 +502,11 @@ jobs:
           retry_wait_seconds: 15
           shell: pwsh
           command: |
-            Invoke-WebRequest -Uri ${{ env.iconlink_url }}/get_png?filename=${{ env.iconlink_file }}"&"uuid=${{ env.iconlink_uuid }} -OutFile ./res/iconx.png 
+            if ("${{ env.iconlink_url }}" -eq "hospio-local") {
+              Copy-Item "$env:RUNNER_TEMP/hospio/${{ env.iconlink_file }}" ./res/iconx.png
+            } else {
+              Invoke-WebRequest -Uri ${{ env.iconlink_url }}/get_png?filename=${{ env.iconlink_file }}"&"uuid=${{ env.iconlink_uuid }} -OutFile ./res/iconx.png
+            }
             mv ./res/icon.ico ./res/icon.ico.bak
             mv ./res/icon.png ./res/icon.png.bak
             mv ./res/tray-icon.ico ./res/tray-icon.ico.bak
@@ -657,7 +663,11 @@ jobs:
           shell: pwsh
           continue_on_error: true
           command: |
-            Invoke-WebRequest -Uri ${{ env.logolink_url }}/get_png?filename=${{ env.logolink_file }}"&"uuid=${{ env.logolink_uuid }} -OutFile ./rustdesk/data/flutter_assets/assets/logo.png
+            if ("${{ env.logolink_url }}" -eq "hospio-local") {
+              Copy-Item "$env:RUNNER_TEMP/hospio/${{ env.logolink_file }}" ./rustdesk/data/flutter_assets/assets/logo.png
+            } else {
+              Invoke-WebRequest -Uri ${{ env.logolink_url }}/get_png?filename=${{ env.logolink_file }}"&"uuid=${{ env.logolink_uuid }} -OutFile ./rustdesk/data/flutter_assets/assets/logo.png
+            }
 
       - name: find Runner.res
         # Windows: find Runner.res (compiled from ./flutter/windows/runner/Runner.rc), copy to ./Runner.res
@@ -814,7 +824,8 @@ jobs:
           if-no-files-found: error
 
       - name: send file to rdgen server
-        if: ${{ env.rdgen == 'true' }}
+        # Hospio Suporte: sem site do rdgen (genurl vazio) o programa sai so como artefato desta execucao.
+        if: ${{ env.rdgen == 'true' && env.genurl != '' }}
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 10
