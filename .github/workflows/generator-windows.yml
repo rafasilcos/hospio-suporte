@@ -793,6 +793,26 @@ jobs:
         run: |
           mv ./SignOutput/rustdesk.msi "./SignOutput/${{ env.filename }}.msi" || echo "rustdesk"
 
+      - name: Impressao digital dos arquivos (Hospio Suporte)
+        # Hospio: a SHA-256 fica no registro publico desta execucao. O arquivo que chegar por qualquer
+        # caminho (o site do rdgen pelo tunel, ou o artefato abaixo) so vale se bater com esta linha.
+        shell: pwsh
+        run: |
+          Get-ChildItem ./SignOutput -File | Where-Object { $_.Extension -in '.exe', '.msi' } | ForEach-Object {
+            "SHA256 {0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
+          }
+
+      - name: Guardar o programa como artefato desta execucao (Hospio Suporte)
+        # Hospio: baixado pelo GitHub autenticado (gh run download), sem depender do envio pelo tunel.
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: hospio-programa
+          path: |
+            ./SignOutput/*.exe
+            ./SignOutput/*.msi
+          retention-days: 7
+          if-no-files-found: error
+
       - name: send file to rdgen server
         if: ${{ env.rdgen == 'true' }}
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
