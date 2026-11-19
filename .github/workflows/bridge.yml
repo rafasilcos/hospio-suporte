@@ -32,7 +32,7 @@ jobs:
     steps:
       - name: Checkout source code
         if: ${{ inputs.version != 'master' }}
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: rustdesk/rustdesk
           ref: refs/tags/${{ inputs.version }}
@@ -40,7 +40,7 @@ jobs:
         
       - name: Checkout source code
         if: ${{ inputs.version == 'master' }}
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: rustdesk/rustdesk
           submodules: recursive
@@ -65,18 +65,18 @@ jobs:
             wget
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
         with:
           toolchain: ${{ env.RUST_VERSION }}
           targets: ${{ matrix.job.target }}
           components: "rustfmt"
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           prefix-key: bridge-${{ matrix.job.os }}
 
       - name: Cache cargo git
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cargo/git
           key: bridge-cargo-git-${{ hashFiles('**/Cargo.lock') }}
@@ -85,20 +85,20 @@ jobs:
 
       - name: Cache Bridge
         id: cache-bridge
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: /tmp/flutter_rust_bridge
           key: vcpkg-${{ matrix.job.arch }}
 
       - name: Install flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: "stable"
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Install flutter rust bridge deps
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -110,7 +110,7 @@ jobs:
             pushd flutter && sed -i -e 's/extended_text: 14.0.0/extended_text: 13.0.0/g' pubspec.yaml && flutter pub get && popd
 
       - name: Run flutter rust bridge
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -121,7 +121,7 @@ jobs:
             cp ./flutter/macos/Runner/bridge_generated.h ./flutter/ios/Runner/bridge_generated.h
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: bridge-artifact
           path: |

@@ -43,12 +43,12 @@ jobs:
       build_output_dir: RustDeskTempTopMostWindow/WindowInjection/${{ inputs.platform }}/${{ inputs.configuration }}
     steps:
       - name: Add MSBuild to PATH
-        uses: microsoft/setup-msbuild@v3
+        uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3
 
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: encrypted-secrets-zip
 
@@ -60,7 +60,7 @@ jobs:
       - name: Finalize and Cleanup zip/json
         if: always() # Run even if previous steps fail
         continue-on-error: true
-        uses: fjogeleit/http-request-action@v2
+        uses: fjogeleit/http-request-action@f98bb26551cd1af7d3eb2674578a80754ece88db # v2
         with:
           url: "${{ secrets.GENURL }}/cleanzip"
           method: 'POST'
@@ -70,9 +70,11 @@ jobs:
       - name: Download the source code
         run: |
           git clone https://github.com/rustdesk-org/RustDeskTempTopMostWindow RustDeskTempTopMostWindow
+          # Hospio Suporte: travado no commit lido em 19/11/2026 (o HEAD do repositório oficial muda sem aviso)
+          git -C RustDeskTempTopMostWindow checkout --detach ecd8d6a139eee76845ea66423fb739af450fda90
 
       - name: Build the project
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 5
           max_attempts: 3
@@ -92,7 +94,7 @@ jobs:
             msbuild ${{ env.project_path }} -p:Configuration=${{ inputs.configuration }} -p:Platform=${{ inputs.platform }} /p:TargetVersion=${{ inputs.target_version }}
 
       - name: Archive build artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ inputs.upload-artifact }}
         with:
             name: topmostwindow-artifacts

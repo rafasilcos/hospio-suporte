@@ -92,9 +92,17 @@ jobs:
           # - { target: aarch64-pc-windows-msvc, os: windows-2022, arch: aarch64 }
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Guardar os remendos deste repositorio (Hospio Suporte)
+        # Hospio: os remendos saem DESTE repositorio, no commit que esta rodando - nunca do master do autor.
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:RUNNER_TEMP/patches" | Out-Null
+          Copy-Item -Recurse -Force ".github/patches/*" "$env:RUNNER_TEMP/patches/"
+          Get-ChildItem "$env:RUNNER_TEMP/patches" | Select-Object -ExpandProperty Name
         
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: encrypted-secrets-zip
 
@@ -106,7 +114,7 @@ jobs:
       - name: Finalize and Cleanup zip/json
         if: always() # Run even if previous steps fail
         continue-on-error: true
-        uses: fjogeleit/http-request-action@v2
+        uses: fjogeleit/http-request-action@f98bb26551cd1af7d3eb2674578a80754ece88db # v2
         with:
           url: "${{ secrets.GENURL }}/cleanzip"
           method: 'POST'
@@ -114,7 +122,7 @@ jobs:
           data: '{"uuid": "${{ env.uuid }}"}'
 
       - name: Export GitHub Actions cache environment variables
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
@@ -132,7 +140,7 @@ jobs:
 
       - name: Checkout source code
         if: ${{ env.VERSION != 'master' }}
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: rustdesk/rustdesk
           ref: refs/tags/${{ env.VERSION }}
@@ -140,7 +148,7 @@ jobs:
 
       - name: Checkout source code
         if: ${{ env.VERSION == 'master' }}
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: rustdesk/rustdesk
           submodules: recursive
@@ -159,14 +167,14 @@ jobs:
         if: ${{ env.update_public_key != '' }}
         shell: bash
         run: |
-          curl -sSL -o allow_custom_update.py https://raw.githubusercontent.com/bryangerlach/rdgen/refs/heads/master/.github/patches/allow_custom_update.py
+          cp "$(cygpath -u "$RUNNER_TEMP")/patches/allow_custom_update.py" allow_custom_update.py
           python3 allow_custom_update.py \
             --rustdesk-root . \
             --update-url "${{ env.downloadLink}}/api/version/latest" \
             --ed25519-public-key "${{ env.update_public_key }}"
 
       - name: Restore bridge files
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@2a5974104b6d5dbdb2f9468a3e54da3bdd241578 # master
         with:
           name: bridge-artifact
           path: ./
@@ -331,25 +339,25 @@ jobs:
           #sed -i '/intl:/a \ \ archive: ^3.6.1' ./flutter/pubspec.yaml
 
       - name: allow custom.txt
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 5
           max_attempts: 3
           retry_wait_seconds: 15
           shell: pwsh
           command: |
-            Invoke-WebRequest -Uri https://raw.githubusercontent.com/bryangerlach/rdgen/refs/heads/master/.github/patches/allowCustom.py -OutFile allowCustom.py
+            Copy-Item "$env:RUNNER_TEMP/patches/allowCustom.py" allowCustom.py
             python allowCustom.py
-            Invoke-WebRequest -Uri https://raw.githubusercontent.com/bryangerlach/rdgen/refs/heads/master/.github/patches/forcePresetPassword.py -OutFile forcePresetPassword.py
+            Copy-Item "$env:RUNNER_TEMP/patches/forcePresetPassword.py" forcePresetPassword.py
             python forcePresetPassword.py
             # Remove Setup Server Tip
-            Invoke-WebRequest -Uri https://raw.githubusercontent.com/bryangerlach/rdgen/refs/heads/master/.github/patches/removeSetupServerTip.diff -OutFile removeSetupServerTip.diff
+            Copy-Item "$env:RUNNER_TEMP/patches/removeSetupServerTip.diff" removeSetupServerTip.diff
             git apply removeSetupServerTip.diff
 
       - name: apply theme colors
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri https://raw.githubusercontent.com/bryangerlach/rdgen/refs/heads/master/.github/patches/themeColors.py -OutFile themeColors.py
+          Copy-Item "$env:RUNNER_TEMP/patches/themeColors.py" themeColors.py
           python themeColors.py
 
       - name: Patch remote printer port to spool file
@@ -402,12 +410,12 @@ jobs:
                       print("Warning: RD_PRINTER_PORT not matched in RemotePrinter.cpp")
 
       - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v2
+        uses: KyleMayes/install-llvm-action@ebc0426251bc40c7cd31162802432c68818ab8f0 # v2
         with:
           version: ${{ env.LLVM_VERSION }}
 
       - name: Install flutter
-        uses: subosito/flutter-action@v2.12.0 #https://github.com/subosito/flutter-action/issues/277
+        uses: subosito/flutter-action@2783a3f08e1baf891508463f8c6653c258246225 # v2.12.0 -https://github.com/subosito/flutter-action/issues/277
         with:
           channel: "stable"
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -431,18 +439,18 @@ jobs:
           fi
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
         with:
           toolchain: ${{ env.SCITER_RUST_VERSION }}
           targets: ${{ matrix.job.target }}
           components: "rustfmt"
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           prefix-key: ${{ matrix.job.os }}
 
       - name: Restore vcpkg installed cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: C:\vcpkg\installed
           key: vcpkg-windows-${{ env.VCPKG_COMMIT_ID }}-${{ matrix.job.vcpkg-triplet }}
@@ -450,7 +458,7 @@ jobs:
             vcpkg-windows-${{ env.VCPKG_COMMIT_ID }}-
 
       - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
+        uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11
         with:
           vcpkgDirectory: C:\vcpkg
           vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
@@ -477,7 +485,7 @@ jobs:
         shell: bash
 
       - name: Save vcpkg installed cache
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         continue-on-error: true
         with:
           path: C:\vcpkg\installed
@@ -485,7 +493,7 @@ jobs:
           
       - name: magick stuff
         if: ${{ env.iconlink_url != 'false' }}
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 5
           max_attempts: 3
@@ -529,14 +537,14 @@ jobs:
 
       - name: use X for offline display instead of orange circle
         if: env.xOffline == 'true'
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 5
           max_attempts: 3
           retry_wait_seconds: 15
           shell: pwsh
           command: |
-            Invoke-WebRequest -Uri https://raw.githubusercontent.com/bryangerlach/rdgen/refs/heads/master/.github/patches/xoffline.py -OutFile xoffline.py
+            Copy-Item "$env:RUNNER_TEMP/patches/xoffline.py" xoffline.py
             python xoffline.py
 
       - name: removeNewVersionNotif
@@ -571,10 +579,10 @@ jobs:
           cd ..
 
       - name: Checkout printer-adapter crate
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          repository: bryangerlach/rdgen
-          ref: master
+          repository: ${{ github.repository }}
+          ref: ${{ github.sha }}
           path: ./temp-repo
 
       - name: Move printer-adapter into place
@@ -641,7 +649,7 @@ jobs:
 
       - name: logo stuff
         if: ${{ env.logolink_url != 'false' }}
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 5
           max_attempts: 3
@@ -668,7 +676,7 @@ jobs:
           fi
 
       - name: Download RustDeskTempTopMostWindow artifacts
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@2a5974104b6d5dbdb2f9468a3e54da3bdd241578 # master
         if: env.UPLOAD_ARTIFACT == 'true'
         with:
           name: topmostwindow-artifacts
@@ -721,7 +729,7 @@ jobs:
           mv ./target/release/rustdesk-portable-packer.exe "./SignOutput/rustdesk.exe"
 
       - name: Add MSBuild to PATH
-        uses: microsoft/setup-msbuild@v3
+        uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3
 
       - name: Build msi
         continue-on-error: true
@@ -787,7 +795,7 @@ jobs:
 
       - name: send file to rdgen server
         if: ${{ env.rdgen == 'true' }}
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -799,7 +807,7 @@ jobs:
 
       - name: send file to api server
         if: ${{ env.rdgen == 'false' }}
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -816,6 +824,6 @@ jobs:
     if: always()
     steps:
       - name: Delete secrets artifact
-        uses: geekyeggo/delete-artifact@v6
+        uses: geekyeggo/delete-artifact@176a747ab7e287e3ff4787bf8a148716375ca118 # v6
         with:
           name: encrypted-secrets-zip
