@@ -263,6 +263,10 @@ jobs:
           sed -i -e 's|Purslane Ltd|${{ env.compname }}|' ./libs/portable/Cargo.toml
           sed -i -e 's|Purslane Ltd|${{ env.compname }}|' ./res/msi/Package/License.rtf
           sed -i -e 's|Purslane Ltd|${{ env.compname }}|' ./src/main.rs
+          # Hospio (19/11/2026): o .exe entregue é o empacotador portátil, e o winres dele (e o do Cargo.toml raiz) não tem
+          # CompanyName — sem estas linhas o campo Empresa das propriedades do arquivo no Windows sai VAZIO
+          grep -q '^CompanyName' ./libs/portable/Cargo.toml || sed -i -e 's|^\[package.metadata.winres\]|&\nCompanyName = "${{ env.compname }}"|' ./libs/portable/Cargo.toml
+          grep -q '^CompanyName' ./Cargo.toml || sed -i -e 's|^\[package.metadata.winres\]|&\nCompanyName = "${{ env.compname }}"|' ./Cargo.toml
              
       - name: change url to custom
         if: env.urlLink != 'https://rustdesk.com'
